@@ -14,6 +14,7 @@
 
 unsigned int PREVIEW_WIDTH = 1280;
 unsigned int PREVIEW_HEIGHT = 960;
+
 #ifdef PI
 RaspiCamCvCapture * capture;
 #else
