@@ -7,6 +7,7 @@
 #include "opencv2/imgproc/imgproc_c.h"
 
 #ifdef PI
+#include "RaspiCamCV.h"
 #include <SDL.h>
 #include <SDL_video.h>
 #endif
