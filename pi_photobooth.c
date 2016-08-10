@@ -150,15 +150,14 @@ void learn_background(double * h_mean, double * s_mean, double * h_stdev,
 }
 
 int main(int argc, char ** argv) {
-	int x, y;
+	int x, y, i;
 	IplImage * origin;
 
-	if(argc < 2){
+	if (argc < 2) {
 		printf("Specify the background image to use \n");
-		return -1 ;
+		return -1;
 	}
-	IplImage * background_image = cvLoadImage(
-			argv[1], CV_LOAD_IMAGE_COLOR);
+	IplImage * background_image = cvLoadImage(argv[1], CV_LOAD_IMAGE_COLOR);
 #ifdef PI
 	IplImage * preview;
 #else
@@ -200,23 +199,19 @@ int main(int argc, char ** argv) {
 	properties -> brightness = 50;
 	properties -> saturation = 0;
 	properties -> exposure = AUTO;
-	properties -> shutter_speed = 0;// 0 is autoo
+	properties -> shutter_speed = 0;
 	printf("Init sensor \n");
 	capture = (RaspiCamCvCapture *) raspiCamCvCreateCameraCapture3(0, config, properties, 1);
 	free(config);
 	printf("Wait stable sensor \n");
-	for(i = 0; (i < framerate && thread_alive); ) {
+	for(i = 0; i < framerate; i ++ ) {
 		int success = 0;
-		success = raspiCamCvGrab(capture);
-		if(success) {
-			IplImage* image = raspiCamCvRetrieve(capture);
-			i ++;
-		}
+		IplImage* image = raspiCamCvQueryFrame(capture);
 	}
+	init_sdl();
 #else
 	capture = cvCaptureFromCAM(0);
 #endif
-	//init_sdl();
 	printf("Learning background \n");
 	learn_background(h_mean, s_mean, h_stdev, s_stdev, 100);
 	printf("Background learnt \n");
@@ -231,9 +226,9 @@ int main(int argc, char ** argv) {
 	cvShowImage("back", background_learnt);
 	while (1) {
 #ifdef PI
-		origin = raspiCamCvQueryFrame(capture);
+		preview = raspiCamCvQueryFrame(capture); // Pi capture at the preview size
 #else
-		origin = cvQueryFrame(capture);
+		origin = cvQueryFrame(capture); //webcam may not support resolution
 		cvResize(origin, preview, CV_INTER_CUBIC);
 #endif
 
@@ -301,22 +296,24 @@ int main(int argc, char ** argv) {
 			}
 		}
 
-		/*SDL_Surface * sdl_surface = ipl_to_sdl(preview);
-		 SDL_BlitSurface(sdl_surface, NULL, gScreenSurface, NULL);
-		 SDL_UpdateWindowSurface(gWindow);
-		 SDL_Event event;
-		 if (SDL_PollEvent(&event)== 1) {
-		 switch (event.type) {
-		 case SDL_KEYDOWN:
-		 exit(0);
-		 default:
-		 break;
-		 }
-		 }
-		 SDL_Delay(10);
-		 SDL_FreeSurface(sdl_surface);*/
-
+#ifdef PI
+		SDL_Surface * sdl_surface = ipl_to_sdl(preview);
+		SDL_BlitSurface(sdl_surface, NULL, gScreenSurface, NULL);
+		SDL_UpdateWindowSurface(gWindow);
+		SDL_Event event;
+		if (SDL_PollEvent(&event)== 1) {
+			switch (event.type) {
+				case SDL_KEYDOWN:
+				exit(0);
+				default:
+				break;
+			}
+		}
+		SDL_Delay(10);
+		SDL_FreeSurface(sdl_surface);
+#else
 		cvShowImage("preview", preview);
 		cvWaitKey(1);
+#endif
 	}
 }
