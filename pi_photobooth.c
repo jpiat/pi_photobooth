@@ -206,7 +206,7 @@ int main(int argc, char ** argv) {
 	capture = (RaspiCamCvCapture *) raspiCamCvCreateCameraCapture3(0, config, properties, 1);
 	free(config);
 	printf("Wait stable sensor \n");
-	for(i = 0; i < framerate; i ++ ) {
+	for(i = 0; i < 10 ; i ++ ) {
 		int success = 0;
 		IplImage* image = raspiCamCvQueryFrame(capture);
 	}
