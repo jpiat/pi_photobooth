@@ -37,7 +37,7 @@ int init_sdl() {
 	} else {
 		gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED,
 				SDL_WINDOWPOS_UNDEFINED, PREVIEW_WIDTH, PREVIEW_HEIGHT,
-				SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL);
+				SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
 		if (gWindow == NULL) {
 			printf("Window could not be created! SDL_Error: %s\n",
 					SDL_GetError());
