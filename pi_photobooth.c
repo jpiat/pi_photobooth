@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 
 #include "opencv2/highgui/highgui_c.h"
 #include "opencv2/core/core_c.h"
@@ -11,6 +12,9 @@
 #include <SDL.h>
 #include <SDL_video.h>
 #endif
+
+#define STD_DEV_TOLERANCE_H 2.5
+#define STD_DEV_TOLERANCE_S 2.5
 
 unsigned int PREVIEW_WIDTH = 1280;
 unsigned int PREVIEW_HEIGHT = 960;
@@ -54,12 +58,42 @@ SDL_Surface * ipl_to_sdl(IplImage * img) {
 
 #endif
 
+struct timespec start_time;
+struct timespec end_time;
+struct timespec diff_time;
+
+int timespec_subtract(struct timespec * result, struct timespec * x,
+		struct timespec * y) {
+	/* Perform the carry for the later subtraction by updating y. */
+	if (x->tv_nsec < y->tv_nsec) {
+		double nbsec = (y->tv_nsec - x->tv_nsec) / 1000000000.0;
+		y->tv_nsec -= nbsec * 1000000000;
+		y->tv_sec += nbsec;
+	}
+	if (x->tv_nsec - y->tv_nsec > 1000000000) {
+		double nbsec = (x->tv_nsec - y->tv_nsec) / 1000000000.0;
+		y->tv_nsec += nbsec * 1000000000.0;
+		y->tv_sec -= nbsec;
+	}
+
+	/* Compute the time remaining to wait.
+	 tv_usec is certainly positive. */
+	result->tv_sec = x->tv_sec - y->tv_sec;
+	result->tv_nsec = x->tv_nsec - y->tv_nsec;
+
+	/* Return 1 if result is negative. */
+	return x->tv_sec < y->tv_sec;
+}
+
+#define FAST_CONV
 inline void bgr_to_hsv(char * bgr_pix, float * h, float * s, float * v) {
+
+#ifndef FAST_CONV
 	unsigned char r, g, b;
 	float c, M, m;
-	b = bgr_pix[0];
-	g = bgr_pix[1];
-	r = bgr_pix[2];
+	b = ((unsigned char*) bgr_pix)[0];
+	g = ((unsigned char*) bgr_pix)[1];
+	r = ((unsigned char*) bgr_pix)[2];
 	M = r > g ? r : g;
 	M = b > M ? b : M;
 	m = r < g ? r : g;
@@ -67,15 +101,47 @@ inline void bgr_to_hsv(char * bgr_pix, float * h, float * s, float * v) {
 	c = M - m;
 	(*h) = 0;
 	if (M == r)
-		(*h) = fmod(((g - b) / c), 6);
+	(*h) = fmod(((g - b) / c), 6);
 	else if (M == g)
-		(*h) = ((b - r) / c) + 2;
+	(*h) = ((b - r) / c) + 2;
 	else if (M == b)
-		(*h) = ((r - g) / c) + 4;
+	(*h) = ((r - g) / c) + 4;
 	(*h) = (*h) * 60.0;
 	(*v) = M;
 	(*s) = (*v) > 0 ? (c / (*v)) : 0;
 
+#else
+	float r, g, b;
+	b = (float) ((unsigned char*) bgr_pix)[0];
+	g = (float) ((unsigned char*) bgr_pix)[1];
+	r = (float) ((unsigned char*) bgr_pix)[2];
+	float K = 0.f;
+	float chroma = 0.f;
+	if (g < b) {
+		float t;
+		t = g;
+		g = b;
+		b = t;
+		K = -1.f;
+	}
+
+	if (r < g) {
+		float t;
+		t = r;
+		r = g;
+		g = t;
+		K = -2.f / 6.f - K;
+	}
+
+	if (g > b)
+		chroma = r - b;
+	else
+		chroma = r - g;
+
+	(*h) = fabs(K + (g - b) / (6.f * chroma + 1e-20f));
+	(*s) = chroma / (r + 1e-20f);
+	(*v) = r;
+#endif
 }
 
 void learn_background(double * h_mean, double * s_mean, double * h_stdev,
@@ -206,7 +272,7 @@ int main(int argc, char ** argv) {
 	capture = (RaspiCamCvCapture *) raspiCamCvCreateCameraCapture3(0, config, properties, 1);
 	free(config);
 	printf("Wait stable sensor \n");
-	for(i = 0; i < 10 ; i ++ ) {
+	for(i = 0; i < 10; i ++ ) {
 		int success = 0;
 		IplImage* image = raspiCamCvQueryFrame(capture);
 	}
@@ -215,12 +281,18 @@ int main(int argc, char ** argv) {
 	capture = cvCaptureFromCAM(0);
 #endif
 	printf("Learning background \n");
-	learn_background(h_mean, s_mean, h_stdev, s_stdev, 100);
+	learn_background(h_mean, s_mean, h_stdev, s_stdev, 50);
 	printf("Background learnt \n");
 	for (y = 0; y < background_learnt->height; y++) {
 		for (x = 0; x < background_learnt->width; x++) {
+#ifdef FAST_CONV
+			double h_pos = h_mean[x + (y * PREVIEW_WIDTH)] * 255;
+			unsigned char h_u8 = (unsigned char) h_pos;
+#else
 			double h_pos = h_mean[x + (y * PREVIEW_WIDTH)];
 			unsigned char h_u8 = (unsigned char) h_pos;
+#endif
+
 			background_learnt->imageData[(y * background_learnt->widthStep) + x] =
 					h_u8;
 		}
@@ -233,7 +305,7 @@ int main(int argc, char ** argv) {
 		origin = cvQueryFrame(capture); //webcam may not support resolution
 		cvResize(origin, preview, CV_INTER_CUBIC);
 #endif
-
+		clock_gettime(CLOCK_REALTIME, &start_time);
 		for (y = 0; y < preview->height; y++) {
 			for (x = 0; x < preview->width; x++) {
 				float h, s, v;
@@ -251,7 +323,8 @@ int main(int argc, char ** argv) {
 				dist_s = fabs(s_mean_pix - s);
 				ch_std = h_stdev[y * preview->width + x];
 				cs_std = s_stdev[y * preview->width + x];
-				if (dist_h <= (2.5 * ch_std) && dist_s <= (2.5 * cs_std)) {
+				if (dist_h <= (STD_DEV_TOLERANCE_H * ch_std)
+						&& dist_s <= (STD_DEV_TOLERANCE_S * cs_std)) {
 					background_mask->imageData[y * background_mask->widthStep
 							+ (x * background_mask->nChannels)] = 0xFF;
 				}
@@ -297,7 +370,10 @@ int main(int argc, char ** argv) {
 				}
 			}
 		}
-
+		clock_gettime(CLOCK_REALTIME, &end_time);
+		timespec_subtract(&diff_time, &end_time, &start_time);
+		printf("%s :  %lu s, %lu ns \n", "processing : ", diff_time.tv_sec,
+				diff_time.tv_nsec);
 #ifdef PI
 		SDL_Surface * sdl_surface = ipl_to_sdl(preview);
 		SDL_BlitSurface(sdl_surface, NULL, gScreenSurface, NULL);
@@ -317,5 +393,6 @@ int main(int argc, char ** argv) {
 		cvShowImage("preview", preview);
 		cvWaitKey(1);
 #endif
+
 	}
 }
