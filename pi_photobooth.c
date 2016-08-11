@@ -16,8 +16,10 @@
 #define STD_DEV_TOLERANCE_H 2.5
 #define STD_DEV_TOLERANCE_S 2.5
 
-unsigned int PREVIEW_WIDTH = 1280;
-unsigned int PREVIEW_HEIGHT = 960;
+unsigned int PREVIEW_WIDTH = 640;
+unsigned int PREVIEW_HEIGHT = 480;
+unsigned int FRAMERATE = 10 ;
+//#define SDL2
 
 #ifdef PI
 RaspiCamCvCapture * capture;
@@ -50,12 +52,17 @@ int init_sdl() {
 	return success;
 }
 
+SDL_Surface * ipl_to_sdl(IplImage * img) {
+        SDL_Surface *surface = SDL_CreateRGBSurfaceFrom((void*) img->imageData,
+                        img->width, img->height, img->depth * img->nChannels,
+                        img->widthStep, 0xff0000, 0x00ff00, 0x0000ff, 0);
+        return surface;
+}
+
 #else
 int init_sdl() {
-	SDL_Surface *screen;
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
-		success = 0;
 		return 0 ;
 	}
 
@@ -65,22 +72,24 @@ int init_sdl() {
 	int systemZ = videoInfo->vfmt->BitsPerPixel;
 
 	printf ("%d x %d, %d bpp\n", systemX, systemY, systemZ);
-
-	screen = SDL_SetVideoMode(systemX, systemY, systemZ,
+	SDL_ShowCursor(0);
+	gScreenSurface = SDL_SetVideoMode(systemX, systemY, systemZ,
 			SDL_SWSURFACE); // | SDL_FULLSCREEN);
-	if (screen == NULL)
-	dieSDL("SDL_SetVideoMode failed: %s\n");
-
-	return screen;
+	if (gScreenSurface == NULL){
+		SDL_Quit();
+		printf("SDL_SetVideoMode failed: %s\n");
+		return 0 ;
+	}
+	return 1;
 }
-#endif
-
 SDL_Surface * ipl_to_sdl(IplImage * img) {
-	SDL_Surface *surface = SDL_CreateRGBSurfaceFrom((void*) img->imageData,
-			img->width, img->height, img->depth * img->nChannels,
-			img->widthStep, 0xff0000, 0x00ff00, 0x0000ff, 0);
-	return surface;
+        SDL_Surface *surface = SDL_CreateRGBSurfaceFrom((void*) img->imageData,
+                        img->width, img->height, img->depth * img->nChannels,
+                        img->widthStep, 0xff0000, 0x00ff00, 0x0000ff, 0);
+        return surface;
 }
+
+#endif
 
 #endif
 
@@ -284,7 +293,7 @@ int main(int argc, char ** argv) {
 	config->width=PREVIEW_WIDTH;
 	config->height=PREVIEW_HEIGHT;
 	config->bitrate=0;      // zero: leave as default
-	config->framerate=5;
+	config->framerate=FRAMERATE;
 	config->monochrome=0;
 	properties->hflip = 1;
 	properties->vflip = 1;
@@ -302,7 +311,7 @@ int main(int argc, char ** argv) {
 		int success = 0;
 		IplImage* image = raspiCamCvQueryFrame(capture);
 	}
-	init_sdl();
+	if(init_sdl() == 0)printf("Failed to start display\n");
 #else
 	capture = cvCaptureFromCAM(0);
 #endif
@@ -323,7 +332,7 @@ int main(int argc, char ** argv) {
 					h_u8;
 		}
 	}
-	cvShowImage("back", background_learnt);
+	//cvShowImage("back", background_learnt);
 	while (1) {
 #ifdef PI
 		preview = raspiCamCvQueryFrame(capture); // Pi capture at the preview size
@@ -411,18 +420,15 @@ int main(int argc, char ** argv) {
 #ifdef PI
 		SDL_Surface * sdl_surface = ipl_to_sdl(preview);
 		SDL_BlitSurface(sdl_surface, NULL, gScreenSurface, NULL);
+#ifdef SDL2
 		SDL_UpdateWindowSurface(gWindow);
-		SDL_Event event;
-		if (SDL_PollEvent(&event)== 1) {
-			switch (event.type) {
-				case SDL_KEYDOWN:
-				exit(0);
-				default:
-				break;
-			}
-		}
 		SDL_Delay(10);
 		SDL_FreeSurface(sdl_surface);
+#else
+		SDL_UpdateRect(gScreenSurface, 0, 0, 0, 0);
+                SDL_Delay(10);
+		SDL_FreeSurface(sdl_surface);
+#endif
 #else
 		cvShowImage("preview", preview);
 		cvWaitKey(1);
