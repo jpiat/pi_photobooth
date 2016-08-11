@@ -328,45 +328,53 @@ int main(int argc, char ** argv) {
 					background_mask->imageData[y * background_mask->widthStep
 							+ (x * background_mask->nChannels)] = 0xFF;
 				}
-			}
-		}
 
-		for (y = 1; y < (preview->height - 1); y++) {
-			for (x = 1; x < (preview->width - 1); x++) {
-				unsigned char is_background = 0;
-				//dilate
-				is_background |= background_mask->imageData[y
-						* background_mask->widthStep
-						+ (x * background_mask->nChannels)];
-				is_background |= background_mask->imageData[(y + 1)
-						* background_mask->widthStep
-						+ (x * background_mask->nChannels)];
-				is_background |= background_mask->imageData[(y - 1)
-						* background_mask->widthStep
-						+ (x * background_mask->nChannels)];
-				is_background |= background_mask->imageData[y
-						* background_mask->widthStep
-						+ ((x + 1) * background_mask->nChannels)];
-				is_background |= background_mask->imageData[y
-						* background_mask->widthStep
-						+ ((x - 1) * background_mask->nChannels)];
+				//need to perform dilate of background ...
+				int decal_x, decal_y;
+				if (x > 1 && y > 1) {
+					decal_x = x - 1;
+					decal_y = y - 1;
+					unsigned char is_background = 0;
+					//dilate
+					is_background |= background_mask->imageData[decal_y
+							* background_mask->widthStep
+							+ (decal_x * background_mask->nChannels)];
+					is_background |= background_mask->imageData[(decal_y + 1)
+							* background_mask->widthStep
+							+ (decal_x * background_mask->nChannels)];
+					is_background |= background_mask->imageData[(decal_y - 1)
+							* background_mask->widthStep
+							+ (decal_x * background_mask->nChannels)];
+					is_background |= background_mask->imageData[decal_y
+							* background_mask->widthStep
+							+ ((decal_x + 1) * background_mask->nChannels)];
+					is_background |= background_mask->imageData[decal_y
+							* background_mask->widthStep
+							+ ((decal_x - 1) * background_mask->nChannels)];
 
-				if (is_background != 0) {
-					preview->imageData[y * preview->widthStep
-							+ (x * preview->nChannels)] =
-							preview_background->imageData[y
-									* preview_background->widthStep
-									+ (x * preview_background->nChannels)];
-					preview->imageData[y * preview->widthStep
-							+ (x * preview->nChannels) + 1] =
-							preview_background->imageData[y
-									* preview_background->widthStep
-									+ (x * preview_background->nChannels) + 1];
-					preview->imageData[y * preview->widthStep
-							+ (x * preview->nChannels) + 2] =
-							preview_background->imageData[y
-									* preview_background->widthStep
-									+ (x * preview_background->nChannels) + 2];
+					if (is_background != 0) {
+						preview->imageData[decal_y * preview->widthStep
+								+ (decal_x * preview->nChannels)] =
+								preview_background->imageData[decal_y
+										* preview_background->widthStep
+										+ (decal_x
+												* preview_background->nChannels)];
+						preview->imageData[decal_y * preview->widthStep
+								+ (decal_x * preview->nChannels) + 1] =
+								preview_background->imageData[decal_y
+										* preview_background->widthStep
+										+ (decal_x
+												* preview_background->nChannels)
+										+ 1];
+						preview->imageData[decal_y * preview->widthStep
+								+ (decal_x * preview->nChannels) + 2] =
+								preview_background->imageData[decal_y
+										* preview_background->widthStep
+										+ (decal_x
+												* preview_background->nChannels)
+										+ 2];
+					}
+
 				}
 			}
 		}
