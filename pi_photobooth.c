@@ -28,6 +28,7 @@ CvCapture * capture;
 #ifdef PI
 SDL_Surface* gScreenSurface = NULL, *gWindow;
 
+#ifdef SDL2
 int init_sdl() {
 
 	int success = 1;
@@ -48,6 +49,31 @@ int init_sdl() {
 	}
 	return success;
 }
+
+#else
+int init_sdl() {
+	SDL_Surface *screen;
+	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+		printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
+		success = 0;
+		return 0 ;
+	}
+
+	const SDL_VideoInfo* videoInfo = SDL_GetVideoInfo ();
+	int systemX = videoInfo->current_w;
+	int systemY = videoInfo->current_h;
+	int systemZ = videoInfo->vfmt->BitsPerPixel;
+
+	printf ("%d x %d, %d bpp\n", systemX, systemY, systemZ);
+
+	screen = SDL_SetVideoMode(systemX, systemY, systemZ,
+			SDL_SWSURFACE); // | SDL_FULLSCREEN);
+	if (screen == NULL)
+	dieSDL("SDL_SetVideoMode failed: %s\n");
+
+	return screen;
+}
+#endif
 
 SDL_Surface * ipl_to_sdl(IplImage * img) {
 	SDL_Surface *surface = SDL_CreateRGBSurfaceFrom((void*) img->imageData,
