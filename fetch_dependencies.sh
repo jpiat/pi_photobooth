@@ -49,16 +49,6 @@ fi
 
 cd ${BASE_DIR}/dependencies
 
-#if [ ! -d motor_hat_clib ]; then
-#	git clone https://github.com/jpiat/motor_hat_clib.git
-#else
-#	cd motor_hat_clib
-#	git pull
-#	cd ..
-#fi
-
-cd ${BASE_DIR}/dependencies
-
 cd opencv/
 git checkout tags/3.1.0
 mkdir release

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+
+while true ;do
 TIMESTAMP=`date +%s`
 RANDOM_FILE=`ls ./background_photos | sort -R | tail -n 1`
 RANDOM_FILE_NAME=`echo "${RANDOM_FILE}" | cut -d'.' -f1`
@@ -15,3 +17,4 @@ echo ${OUTPUT_FILE}
 ./pi_photobooth background_photos/${RANDOM_FILE}
 raspistill -t 1000 -o ${OUTPUT_FILE}
 
+done
