@@ -1,5 +1,5 @@
 #!/bin/bash
-
+sudo mount /dev/sda1 /home/pi/Pictures
 
 while true ;do
 TIMESTAMP=`date +%s`
@@ -15,6 +15,6 @@ echo ${RANDOM_FILE_NAME}
 echo ${OUTPUT_FILE}
 
 ./pi_photobooth background_photos/${RANDOM_FILE}
-raspistill -t 1000 -o ${OUTPUT_FILE}
+sudo raspistill -t 1000 -o /home/pi/Pictures/${OUTPUT_FILE}
 
 done

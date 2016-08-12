@@ -16,10 +16,13 @@
 #define STD_DEV_TOLERANCE_H 2.5
 #define STD_DEV_TOLERANCE_S 2.5
 
-unsigned int PREVIEW_WIDTH = 640;
-unsigned int PREVIEW_HEIGHT = 480;
+unsigned int PREVIEW_WIDTH = 960;
+unsigned int PREVIEW_HEIGHT = 720;
 unsigned int FRAMERATE = 10 ;
-//#define SDL2
+
+
+int display_width ;
+int display_height ;//#define SDL2
 
 #ifdef PI
 RaspiCamCvCapture * capture;
@@ -71,8 +74,11 @@ int init_sdl() {
 	int systemX = videoInfo->current_w;
 	int systemY = videoInfo->current_h;
 	int systemZ = videoInfo->vfmt->BitsPerPixel;
-
+	display_width = systemX ;
+	display_height = systemY ;
 	printf ("%d x %d, %d bpp\n", systemX, systemY, systemZ);
+	//SDL_Quit();
+	//exit(0);
 	SDL_ShowCursor(0);
 	gScreenSurface = SDL_SetVideoMode(systemX, systemY, systemZ,
 			SDL_SWSURFACE); // | SDL_FULLSCREEN);
@@ -312,7 +318,7 @@ int main(int argc, char ** argv) {
 		int success = 0;
 		IplImage* image = raspiCamCvQueryFrame(capture);
 	}
-	if(init_sdl() == 0)printf("Failed to start display\n");
+	//if(init_sdl() == 0)printf("Failed to start display\n");
 #else
 	capture = cvCaptureFromCAM(0);
 #endif
@@ -332,6 +338,11 @@ int main(int argc, char ** argv) {
 			background_learnt->imageData[(y * background_learnt->widthStep) + x] =
 					h_u8;
 		}
+	}
+	if(init_sdl() ==0){
+		printf("Failed to init display \n");
+		SDL_Quit();
+		exit(-1);
 	}
 	//cvShowImage("back", background_learnt);
 	while (1) {
@@ -420,7 +431,10 @@ int main(int argc, char ** argv) {
 				diff_time.tv_nsec);
 #ifdef PI
 		SDL_Surface * sdl_surface = ipl_to_sdl(preview);
-		SDL_BlitSurface(sdl_surface, NULL, gScreenSurface, NULL);
+		SDL_Rect position ;
+		position.x = (display_width/2) - (PREVIEW_WIDTH/2);
+		position.y = 0 ;
+		SDL_BlitSurface(sdl_surface, NULL, gScreenSurface, &position);
 #ifdef SDL2
 		SDL_UpdateWindowSurface(gWindow);
 #else
