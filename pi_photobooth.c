@@ -423,17 +423,29 @@ int main(int argc, char ** argv) {
 		SDL_BlitSurface(sdl_surface, NULL, gScreenSurface, NULL);
 #ifdef SDL2
 		SDL_UpdateWindowSurface(gWindow);
-		SDL_Delay(10);
-		SDL_FreeSurface(sdl_surface);
 #else
 		SDL_UpdateRect(gScreenSurface, 0, 0, 0, 0);
-                SDL_Delay(10);
-		SDL_FreeSurface(sdl_surface);
 #endif
+		SDL_Event event;
+		if (SDL_PollEvent(&event)== 1) {
+			switch (event.type) {
+				case SDL_KEYDOWN:
+				SDL_Quit();
+				exit(0);
+				default:
+				break;
+			}
+		}
+		SDL_Delay(10);
+		SDL_FreeSurface(sdl_surface);
 #else
 		cvShowImage("preview", preview);
 		cvWaitKey(1);
 #endif
 
 	}
+#ifdef PI
+	raspiCamCvReleaseCapture(&capture);
+	SDL_Quit();
+#endif
 }

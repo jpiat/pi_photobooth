@@ -12,6 +12,8 @@ sudo apt-get -y install libatlas-base-dev gfortran
 sudo apt-get -y install libgtk2.0-dev
 sudo apt-get -y install libdc1394-22-dev libilmbase6 openexr libopenexr-dev
 #end of required by OpenCV
+sudo apt-get -y install libsdl1.2-dev
+
 
 if [ ! -d dependencies ]; then
 	mkdir dependencies
