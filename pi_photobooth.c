@@ -11,6 +11,7 @@
 #include "RaspiCamCV.h"
 #include <SDL.h>
 #include <SDL_video.h>
+#include <wiringPi.h>
 #endif
 
 #define STD_DEV_TOLERANCE_H 2.5
@@ -261,6 +262,7 @@ void learn_background(double * h_mean, double * s_mean, double * h_stdev,
 
 int main(int argc, char ** argv) {
 	int x, y, i;
+	int pin_state = 1 ;
 	IplImage * origin;
 
 	if (argc < 2) {
@@ -319,6 +321,9 @@ int main(int argc, char ** argv) {
 		IplImage* image = raspiCamCvQueryFrame(capture);
 	}
 	//if(init_sdl() == 0)printf("Failed to start display\n");
+	pinMode (0, INPUT); //setup pin 0 to trigger capture
+	pullUpDnControl(0, PUD_UP);
+	pin_state = digitalRead(0);
 #else
 	capture = cvCaptureFromCAM(0);
 #endif
@@ -444,6 +449,7 @@ int main(int argc, char ** argv) {
 		if (SDL_PollEvent(&event)== 1) {
 			switch (event.type) {
 				case SDL_KEYDOWN:
+				raspiCamCvReleaseCapture(&capture);
 				SDL_Quit();
 				exit(0);
 				default:
@@ -452,6 +458,12 @@ int main(int argc, char ** argv) {
 		}
 		SDL_Delay(10);
 		SDL_FreeSurface(sdl_surface);
+		if(digitalRead(0) == 1 && pin_state == 0){ //Rising edge ends program
+			//Should record the last fused frame for preview purpose
+			raspiCamCvReleaseCapture(&capture);
+			SDL_Quit();
+                        exit(0);
+		}
 #else
 		cvShowImage("preview", preview);
 		cvWaitKey(1);
