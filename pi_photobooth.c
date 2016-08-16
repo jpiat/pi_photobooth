@@ -14,13 +14,9 @@
 #include <wiringPi.h>
 #endif
 
+#include "camera_config.h"
 #define STD_DEV_TOLERANCE_H 2.5
 #define STD_DEV_TOLERANCE_S 2.5
-
-unsigned int PREVIEW_WIDTH = 960;
-unsigned int PREVIEW_HEIGHT = 720;
-unsigned int FRAMERATE = 10 ;
-
 
 int display_width ;
 int display_height ;//#define SDL2
@@ -231,8 +227,8 @@ int main(int argc, char ** argv) {
 	config->bitrate=0;      // zero: leave as default
 	config->framerate=FRAMERATE;
 	config->monochrome=0;
-	properties->hflip = 0;
-	properties->vflip = 0;
+	properties->hflip = H_FLIP;
+	properties->vflip =V_FLIP;
 	properties -> sharpness = 0;
 	properties -> contrast = 0;
 	properties -> brightness = 50;

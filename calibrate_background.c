@@ -14,11 +14,7 @@
 #include <wiringPi.h>
 #endif
 
-
-unsigned int PREVIEW_WIDTH = 960;
-unsigned int PREVIEW_HEIGHT = 720;
-unsigned int FRAMERATE = 10 ;
-
+#include "camera_config.h"
 
 int display_width ;
 int display_height ;
@@ -192,8 +188,8 @@ int main(int argc, char ** argv) {
 	config->bitrate=0;      // zero: leave as default
 	config->framerate=FRAMERATE;
 	config->monochrome=0;
-	properties->hflip = 0;
-	properties->vflip = 0;
+	properties->hflip = H_FLIP;
+	properties->vflip = V_FLIP;
 	properties -> sharpness = 0;
 	properties -> contrast = 0;
 	properties -> brightness = 50;
@@ -212,7 +208,7 @@ int main(int argc, char ** argv) {
 	capture = cvCaptureFromCAM(0);
 #endif
 	printf("Learning background \n");
-	learn_background(h_mean, s_mean, h_stdev, s_stdev, 50);
+	learn_background(h_mean, s_mean, h_stdev, s_stdev, 100);
 	
 	FILE * fd_hmean = fopen("./background_hmean.raw", "wb");
 	fwrite(h_mean, sizeof(double), PREVIEW_WIDTH*PREVIEW_HEIGHT, fd_hmean);
