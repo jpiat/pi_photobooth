@@ -187,79 +187,6 @@ inline void bgr_to_hsv(char * bgr_pix, float * h, float * s, float * v) {
 #endif
 }
 
-void learn_background(double * h_mean, double * s_mean, double * h_stdev,
-		double * s_stdev, int nb_images) {
-	int x, y;
-	int i;
-	IplImage * origin;
-#ifdef PI
-	IplImage * preview;
-#else
-	IplImage * preview = cvCreateImage(cvSize(PREVIEW_WIDTH, PREVIEW_HEIGHT),
-	IPL_DEPTH_8U, 3);
-#endif
-
-	memset(h_mean, 0, PREVIEW_WIDTH * PREVIEW_HEIGHT * sizeof(double));
-	memset(s_mean, 0, PREVIEW_WIDTH * PREVIEW_HEIGHT * sizeof(double));
-	memset(h_stdev, 0, PREVIEW_WIDTH * PREVIEW_HEIGHT * sizeof(double));
-	memset(s_stdev, 0, PREVIEW_WIDTH * PREVIEW_HEIGHT * sizeof(double));
-	for (i = 0; i < nb_images; i++) {
-		float h, s, v;
-#ifdef PI
-		preview = raspiCamCvQueryFrame(capture);
-#else
-		origin = cvQueryFrame(capture);
-		cvResize(origin, preview, CV_INTER_CUBIC);
-#endif
-
-		for (y = 0; y < preview->height; y++) {
-			for (x = 0; x < preview->width; x++) {
-				bgr_to_hsv(
-						&(preview->imageData[(y * preview->widthStep)
-								+ (x * preview->nChannels)]), &h, &s, &v);
-				h_mean[(y * preview->width) + x] += (double) h;
-				s_mean[(y * preview->width) + x] += (double) s;
-			}
-		}
-	}
-	for (y = 0; y < preview->height; y++) {
-		for (x = 0; x < preview->width; x++) {
-			h_mean[(y * preview->width) + x] /= nb_images;
-			s_mean[(y * preview->width) + x] /= nb_images;
-		}
-	}
-	for (i = 0; i < nb_images; i++) {
-		float h, s, v;
-#ifdef PI
-		preview = raspiCamCvQueryFrame(capture);
-#else
-		origin = cvQueryFrame(capture);
-		cvResize(origin, preview, CV_INTER_CUBIC);
-#endif
-
-		for (y = 0; y < preview->height; y++) {
-			for (x = 0; x < preview->width; x++) {
-				double dist_h, dist_s;
-				bgr_to_hsv(
-						&(preview->imageData[(y * preview->widthStep)
-								+ (x * preview->nChannels)]), &h, &s, &v);
-				dist_h = fabs(h - h_mean[y * preview->width + x]);
-				dist_s = fabs(s - s_mean[y * preview->width + x]);
-				h_stdev[(y * preview->width) + x] += dist_h;
-				s_stdev[(y * preview->width) + x] += dist_s;
-			}
-		}
-	}
-
-	for (y = 0; y < preview->height; y++) {
-		for (x = 0; x < preview->width; x++) {
-			h_stdev[(y * preview->width) + x] /= nb_images;
-			s_stdev[(y * preview->width) + x] /= nb_images;
-		}
-	}
-
-}
-
 int main(int argc, char ** argv) {
 	int x, y, i;
 	int pin_state = 1 ;
@@ -327,9 +254,29 @@ int main(int argc, char ** argv) {
 #else
 	capture = cvCaptureFromCAM(0);
 #endif
-	printf("Learning background \n");
-	learn_background(h_mean, s_mean, h_stdev, s_stdev, 50);
-	printf("Background learnt \n");
+	printf("Loading background model\n");
+
+	FILE * fd_hmean = fopen("./background_hmean.raw", "rb");
+	FILE * fd_hstdev = fopen("./background_hstdev.raw", "rb");
+	FILE * fd_smean = fopen("./background_smean.raw", "rb");
+	FILE * fd_sstdev = fopen("./background_sstdev.raw", "rb");
+
+	if(fd_hmean == NULL || fd_hstdev == NULL || fd_smean == NULL || fd_sstdev == NULL){
+		printf("No calibration file found \n");
+		exit(0);	
+	}
+	
+	fread(h_mean, sizeof(double), PREVIEW_WIDTH*PREVIEW_HEIGHT, fd_hmean);
+	fread(h_stdev, sizeof(double), PREVIEW_WIDTH*PREVIEW_HEIGHT, fd_hstdev);
+	fread(s_mean, sizeof(double), PREVIEW_WIDTH*PREVIEW_HEIGHT, fd_smean);
+	fread(s_stdev, sizeof(double), PREVIEW_WIDTH*PREVIEW_HEIGHT, fd_sstdev);
+	
+	fclose(fd_hmean);
+	fclose(fd_hstdev);
+	fclose(fd_smean);
+	fclose(fd_sstdev);
+	
+	printf("Background loaded \n");
 	for (y = 0; y < background_learnt->height; y++) {
 		for (x = 0; x < background_learnt->width; x++) {
 #ifdef FAST_CONV

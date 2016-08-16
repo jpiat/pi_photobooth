@@ -213,8 +213,20 @@ int main(int argc, char ** argv) {
 #endif
 	printf("Learning background \n");
 	learn_background(h_mean, s_mean, h_stdev, s_stdev, 50);
-	FILE * fd_hmean = fopen("./background_y.raw", "wb");
+	
+	FILE * fd_hmean = fopen("./background_hmean.raw", "wb");
 	fwrite(h_mean, sizeof(double), PREVIEW_WIDTH*PREVIEW_HEIGHT, fd_hmean);
 	fclose(fd_hmean);
 
+	FILE * fd_hstdev = fopen("./background_hstdev.raw", "wb");
+	fwrite(h_stdev, sizeof(double), PREVIEW_WIDTH*PREVIEW_HEIGHT, fd_hstdev);
+	fclose(fd_hstdev);
+
+	FILE * fd_smean = fopen("./background_smean.raw", "wb");
+	fwrite(s_mean, sizeof(double), PREVIEW_WIDTH*PREVIEW_HEIGHT, fd_smean);
+	fclose(fd_smean);
+
+	FILE * fd_sstdev = fopen("./background_sstdev.raw", "wb");
+	fwrite(s_stdev, sizeof(double), PREVIEW_WIDTH*PREVIEW_HEIGHT, fd_sstdev);
+	fclose(fd_sstdev);
 }
