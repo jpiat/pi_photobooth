@@ -304,8 +304,8 @@ int main(int argc, char ** argv) {
 	config->bitrate=0;      // zero: leave as default
 	config->framerate=FRAMERATE;
 	config->monochrome=0;
-	properties->hflip = 1;
-	properties->vflip = 1;
+	properties->hflip = 0;
+	properties->vflip = 0;
 	properties -> sharpness = 0;
 	properties -> contrast = 0;
 	properties -> brightness = 50;
@@ -463,6 +463,8 @@ int main(int argc, char ** argv) {
 			raspiCamCvReleaseCapture(&capture);
 			SDL_Quit();
                         exit(0);
+		}else{
+			pin_state= digitalRead(0);
 		}
 #else
 		cvShowImage("preview", preview);

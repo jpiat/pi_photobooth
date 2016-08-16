@@ -18,5 +18,5 @@ echo ${OUTPUT_FILE}
 
 ./pi_photobooth /home/pi/Pictures/background_photos/${RANDOM_FILE}
 sudo raspistill -t 1000 -o /home/pi/Pictures/foreground_photos/${OUTPUT_FILE}
-
+sync
 done
