@@ -6,13 +6,16 @@ CFLAGS += -O3 -mfpu=neon
 LDFLAGS += -lraspicamcv -lm -lrt -lwiringPi
 
 
-all: pi_photobooth
+all: pi_photobooth calibrate_background
 
 %o: %c
 	gcc -c $(CFLAGS) $< -o $@
 
 pi_photobooth : pi_photobooth.o
 	gcc $(LDFLAGS) -o $@ pi_photobooth.o
+
+calibrate_background : calibrate_background.o
+	gcc $(LDFLAGS) -o $@ calibrate_background.o
 
 clean:
 	rm -f *.o
