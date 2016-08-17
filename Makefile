@@ -19,4 +19,4 @@ calibrate_background : calibrate_background.o
 
 clean:
 	rm -f *.o
-	rm pi_photobooth
+	rm pi_photobooth calibrate_background

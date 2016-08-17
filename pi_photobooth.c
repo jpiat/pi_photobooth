@@ -234,7 +234,7 @@ int main(int argc, char ** argv) {
 	properties -> brightness = 50;
 	properties -> saturation = 0;
 	properties -> exposure = AUTO;
-	properties -> shutter_speed = 0;
+	properties -> shutter_speed = SHUTTER_SPEED ;
 	printf("Init sensor \n");
 	capture = (RaspiCamCvCapture *) raspiCamCvCreateCameraCapture3(0, config, properties, 1);
 	free(config);
