@@ -78,7 +78,7 @@ int init_sdl() {
 	//exit(0);
 	SDL_ShowCursor(0);
 	gScreenSurface = SDL_SetVideoMode(systemX, systemY, systemZ,
-			SDL_SWSURFACE); // | SDL_FULLSCREEN);
+			SDL_HWSURFACE); // | SDL_FULLSCREEN);
 	if (gScreenSurface == NULL){
 		SDL_Quit();
 		printf("SDL_SetVideoMode failed: %s\n");
