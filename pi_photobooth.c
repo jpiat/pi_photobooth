@@ -78,7 +78,7 @@ int init_sdl() {
 	//exit(0);
 	SDL_ShowCursor(0);
 	gScreenSurface = SDL_SetVideoMode(systemX, systemY, systemZ,
-			SDL_HWSURFACE); // | SDL_FULLSCREEN);
+			SDL_HWSURFACE | SDL_FULLSCREEN | SDL_DOUBLEBUF);
 	if (gScreenSurface == NULL){
 		SDL_Quit();
 		printf("SDL_SetVideoMode failed: %s\n");
@@ -387,6 +387,7 @@ int main(int argc, char ** argv) {
 		SDL_UpdateWindowSurface(gWindow);
 #else
 		SDL_UpdateRect(gScreenSurface, 0, 0, 0, 0);
+		SDL_Flip(gScreenSurface);
 #endif
 		SDL_Event event;
 		if (SDL_PollEvent(&event)== 1) {
@@ -399,7 +400,7 @@ int main(int argc, char ** argv) {
 				break;
 			}
 		}
-		SDL_Delay(10);
+		SDL_Delay(1);
 		SDL_FreeSurface(sdl_surface);
 		if(digitalRead(0) == 1 && pin_state == 0){ //Rising edge ends program
 			//Should record the last fused frame for preview purpose
