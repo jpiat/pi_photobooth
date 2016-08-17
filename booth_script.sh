@@ -18,11 +18,12 @@ PREVIEW_FILE+="_"
 PREVIEW_FILE+=${TIMESTAMP}
 PREVIEW_FILE+=".jpg"
 
-echo ${RANDOM_FILE}
-echo ${RANDOM_FILE_NAME}
-echo ${OUTPUT_FILE}
+#echo ${RANDOM_FILE}
+#echo ${RANDOM_FILE_NAME}
+#echo ${OUTPUT_FILE}
 
 ./pi_photobooth /home/pi/Pictures/background_photos/${RANDOM_FILE} /home/pi/Pictures/preview_photos/${PREVIEW_FILE}
-raspistill -t 1000 -o /home/pi/Pictures/foreground_photos/${OUTPUT_FILE}
+raspistill -ss 15000 -t 500 -o /home/pi/Pictures/foreground_photos/${OUTPUT_FILE}
+timeout 2 fbi -T 2 /home/pi/Pictures/preview_photos/${PREVIEW_FILE}
 sync
 done
