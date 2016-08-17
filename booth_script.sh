@@ -1,7 +1,7 @@
 #!/bin/bash
 
-sudo mount /dev/sda1 /home/pi/Pictures
-sudo mkdir /home/pi/Pictures/foreground_photos
+mount /dev/sda1 /home/pi/Pictures
+mkdir /home/pi/Pictures/foreground_photos
 
 while true ;do
 TIMESTAMP=`date +%s`
@@ -23,7 +23,7 @@ echo ${RANDOM_FILE}
 echo ${RANDOM_FILE_NAME}
 echo ${OUTPUT_FILE}
 
-./pi_photobooth /home/pi/Pictures/background_photos/${RANDOM_FILE} /home/pi/foreground_photos/${PREVIEW_FILE}
-sudo raspistill -t 1000 -o /home/pi/Pictures/foreground_photos/${OUTPUT_FILE}
+./pi_photobooth /home/pi/Pictures/background_photos/${RANDOM_FILE} /home/pi/Pictures/foreground_photos/${PREVIEW_FILE}
+raspistill -t 1000 -o /home/pi/Pictures/foreground_photos/${OUTPUT_FILE}
 sync
 done
