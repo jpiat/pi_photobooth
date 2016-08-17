@@ -2,7 +2,7 @@
 
 mount /dev/sda1 /home/pi/Pictures
 mkdir /home/pi/Pictures/foreground_photos
-
+mkdir /home/pi/Pictures/preview_photos
 while true ;do
 TIMESTAMP=`date +%s`
 RANDOM_FILE=`ls /home/pi/Pictures/background_photos | sort -R | tail -n 1`
@@ -13,8 +13,7 @@ OUTPUT_FILE+="_"
 OUTPUT_FILE+=${TIMESTAMP}
 OUTPUT_FILE+=".jpg"
 
-PREVIEW_FILE="preview_"
-PREVIEW_FILE+=${RANDOM_FILE_NAME}
+PREVIEW_FILE=${RANDOM_FILE_NAME}
 PREVIEW_FILE+="_"
 PREVIEW_FILE+=${TIMESTAMP}
 PREVIEW_FILE+=".jpg"
@@ -23,7 +22,7 @@ echo ${RANDOM_FILE}
 echo ${RANDOM_FILE_NAME}
 echo ${OUTPUT_FILE}
 
-./pi_photobooth /home/pi/Pictures/background_photos/${RANDOM_FILE} /home/pi/Pictures/foreground_photos/${PREVIEW_FILE}
+./pi_photobooth /home/pi/Pictures/background_photos/${RANDOM_FILE} /home/pi/Pictures/preview_photos/${PREVIEW_FILE}
 raspistill -t 1000 -o /home/pi/Pictures/foreground_photos/${OUTPUT_FILE}
 sync
 done
