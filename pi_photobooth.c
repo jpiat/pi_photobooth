@@ -20,6 +20,8 @@
 
 int display_width ;
 int display_height ;//#define SDL2
+char * output_path = NULL ;
+
 
 #ifdef PI
 RaspiCamCvCapture * capture;
@@ -31,6 +33,8 @@ CvCapture * capture;
 SDL_Surface* gScreenSurface = NULL, *gWindow;
 
 #ifdef SDL2
+
+
 int init_sdl() {
 
 	int success = 1;
@@ -192,6 +196,9 @@ int main(int argc, char ** argv) {
 		printf("Specify the background image to use \n");
 		return -1;
 	}
+
+	if(argc > 2) output_path = argv[2] ;
+
 	IplImage * background_image = cvLoadImage(argv[1], CV_LOAD_IMAGE_COLOR);
 #ifdef PI
 	IplImage * preview;
@@ -393,6 +400,7 @@ int main(int argc, char ** argv) {
 		if (SDL_PollEvent(&event)== 1) {
 			switch (event.type) {
 				case SDL_KEYDOWN:
+				if(output_path != NULL) cvSaveImage(output_path, preview, 0);
 				raspiCamCvReleaseCapture(&capture);
 				SDL_Quit();
 				exit(0);
@@ -404,6 +412,7 @@ int main(int argc, char ** argv) {
 		SDL_FreeSurface(sdl_surface);
 		if(digitalRead(0) == 1 && pin_state == 0){ //Rising edge ends program
 			//Should record the last fused frame for preview purpose
+			if(output_path != NULL) cvSaveImage(output_path, preview, 0);
 			raspiCamCvReleaseCapture(&capture);
 			SDL_Quit();
                         exit(0);
