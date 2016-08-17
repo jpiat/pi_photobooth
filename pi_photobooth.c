@@ -338,9 +338,9 @@ int main(int argc, char ** argv) {
 					decal_y = y - 1;
 					unsigned char is_background = 0;
 					//dilate
-					is_background |= background_mask->imageData[decal_y
+					/*is_background |= background_mask->imageData[decal_y
 							* background_mask->widthStep
-							+ (decal_x * background_mask->nChannels)];
+							+ (decal_x * background_mask->nChannels)];*/
 					is_background |= background_mask->imageData[(decal_y + 1)
 							* background_mask->widthStep
 							+ (decal_x * background_mask->nChannels)];
