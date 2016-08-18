@@ -244,8 +244,6 @@ int main(int argc, char ** argv) {
 
 	IplImage * eroded_mask = cvCreateImage(
 			cvSize(PREVIEW_WIDTH, PREVIEW_HEIGHT), IPL_DEPTH_8U, 1);
-	IplImage * opened = cvCreateImage(cvSize(PREVIEW_WIDTH, PREVIEW_HEIGHT),
-	IPL_DEPTH_8U, 1);
 
 	double * h_mean, *s_mean, *h_stdev, *s_stdev;
 
