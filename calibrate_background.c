@@ -26,8 +26,8 @@ CvCapture * capture;
 #endif
 
 
-float pop[359] ;
-
+float pop_h[360] ;
+float pop_s[360] ;
 void learn_background(double * h_mean, double * s_mean, double * h_stdev,
 		double * s_stdev, int nb_images) {
 	int x, y;
@@ -44,7 +44,8 @@ void learn_background(double * h_mean, double * s_mean, double * h_stdev,
 	memset(s_mean, 0, PREVIEW_WIDTH * PREVIEW_HEIGHT * sizeof(double));
 	memset(h_stdev, 0, PREVIEW_WIDTH * PREVIEW_HEIGHT * sizeof(double));
 	memset(s_stdev, 0, PREVIEW_WIDTH * PREVIEW_HEIGHT * sizeof(double));
-	memset(pop, 0, sizeof(float)*359);
+	memset(pop_h, 0, sizeof(float)*360);
+	memset(pop_s, 0, sizeof(float)*360);
 	for (i = 0; i < nb_images; i++) {
 		float h, s, v;
 #ifdef PI
@@ -59,7 +60,8 @@ void learn_background(double * h_mean, double * s_mean, double * h_stdev,
 				bgr_to_hsv(
 						&(preview->imageData[(y * preview->widthStep)
 								+ (x * preview->nChannels)]), &h, &s, &v);
-				pop[(unsigned int) h] +=1.0 ;
+				pop_h[(unsigned int) h] +=1.0 ;
+				pop_s[(unsigned int) h] += (s/nb_images) ;
 				h_mean[(y * preview->width) + x] += ((double) h)/nb_images;
 				s_mean[(y * preview->width) + x] += ((double) s)/nb_images;
 			}
@@ -71,7 +73,7 @@ void learn_background(double * h_mean, double * s_mean, double * h_stdev,
 			s_mean[(y * preview->width) + x] /= nb_images;
 		}
 	}*/
-	for (i = 0; i < nb_images; i++) {
+/*	for (i = 0; i < nb_images; i++) {
 		float h, s, v;
 #ifdef PI
 		preview = raspiCamCvQueryFrame(capture);
@@ -93,7 +95,7 @@ void learn_background(double * h_mean, double * s_mean, double * h_stdev,
 			}
 		}
 	}
-
+*/
 	/*for (y = 0; y < preview->height; y++) {
 		for (x = 0; x < preview->width; x++) {
 			h_stdev[(y * preview->width) + x] /= nb_images;
@@ -103,30 +105,38 @@ void learn_background(double * h_mean, double * s_mean, double * h_stdev,
 	unsigned int index_max, index_dev_min, index_dev_max ;
 	float pop_max = 0. ;
 	for(i = 0 ; i < 360 ; i ++){
-		if(pop[i] > pop_max){
-			pop_max = pop[i];
+		if(pop_h[i] > pop_max){
+			pop_max = pop_h[i];
 			index_max = i ;
 		}
-		printf("%f ", pop[i]);
+		//printf("%f ", pop_h[i]);
 	}
 	printf("Max pop is : %d \n", index_max);
 	for(i = index_max ; i < 360 ; i ++){
-		if(pop[i] == 0.0){
+		if(pop_h[i] == 0.0){
 			index_dev_max = (i-1) ;
 		 	break ;
 		}
 	}
 	for(i = index_max ; i >= 0 ; i  --){
-		if(pop[i] == 0.0){
+		if(pop_h[i] == 0.0){
 			index_dev_min = (i+1) ;
 			break ;
 		}
 	}
 	printf("Median is : %d \n", (index_dev_min+index_dev_max)/2);
 	printf("Max dev is : %d \n", (index_dev_max - index_dev_min)/2);
+	float pop_s_mean = 0. ;
+	for(i = index_dev_min ; i <= index_dev_max ; i ++){
+		pop_s_mean += pop_s[i];
+		printf("%f ", pop_s[i]);
+	}
+	pop_s_mean /= ((index_dev_max - index_dev_min) + 1) ;
+	printf("Saturation mean for H : %f \n", pop_s_mean);
 	for(i = 0 ; i < (preview->height * preview->width); i ++){
 		h_mean[i] = (index_dev_min+index_dev_max)/2.;
 		h_stdev[i] = (index_dev_max - index_dev_min)/2. ;
+		s_mean[i] = pop_s_mean ;
 	}
 }
 
@@ -200,6 +210,6 @@ int main(int argc, char ** argv) {
 	fclose(fd_smean);
 
 	FILE * fd_sstdev = fopen("./background_sstdev.raw", "wb");
-	fwrite(s_stdev, sizeof(double), PREVIEW_WIDTH*PREVIEW_HEIGHT, fd_sstdev);
+!	fwrite(s_stdev, sizeof(double), PREVIEW_WIDTH*PREVIEW_HEIGHT, fd_sstdev);
 	fclose(fd_sstdev);
 }
