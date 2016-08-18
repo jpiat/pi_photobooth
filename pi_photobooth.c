@@ -15,8 +15,8 @@
 #endif
 
 #include "camera_config.h"
-#define STD_DEV_TOLERANCE_H 2.5
-#define STD_DEV_TOLERANCE_S 2.5
+#define STD_DEV_TOLERANCE_H 3.5
+#define STD_DEV_TOLERANCE_S 3.5
 
 int display_width;
 int display_height; //#define SDL2
@@ -214,7 +214,7 @@ inline int dilate_pos(IplImage * img, int x, int y) {
 }
 
 int main(int argc, char ** argv) {
-	int x, y;
+	int x, y, i;
 	int pin_state = 1;
 	IplImage * origin;
 
