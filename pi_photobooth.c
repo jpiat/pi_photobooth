@@ -15,7 +15,7 @@
 #endif
 
 #include "camera_config.h"
-#define STD_DEV_TOLERANCE_H 2.5
+#define STD_DEV_TOLERANCE_H 0.8
 #define STD_DEV_TOLERANCE_S 3.5
 
 int display_width;

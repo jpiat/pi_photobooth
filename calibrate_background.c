@@ -100,16 +100,34 @@ void learn_background(double * h_mean, double * s_mean, double * h_stdev,
 			s_stdev[(y * preview->width) + x] /= nb_images;
 		}
 	}*/
-	unsigned int index_max ;
+	unsigned int index_max, index_dev_min, index_dev_max ;
 	float pop_max = 0. ;
 	for(i = 0 ; i < 360 ; i ++){
 		if(pop[i] > pop_max){
 			pop_max = pop[i];
 			index_max = i ;
 		}
+		printf("%f ", pop[i]);
 	}
 	printf("Max pop is : %d \n", index_max);
-
+	for(i = index_max ; i < 360 ; i ++){
+		if(pop[i] == 0.0){
+			index_dev_max = (i-1) ;
+		 	break ;
+		}
+	}
+	for(i = index_max ; i >= 0 ; i  --){
+		if(pop[i] == 0.0){
+			index_dev_min = (i+1) ;
+			break ;
+		}
+	}
+	printf("Median is : %d \n", (index_dev_min+index_dev_max)/2);
+	printf("Max dev is : %d \n", (index_dev_max - index_dev_min)/2);
+	for(i = 0 ; i < (preview->height * preview->width); i ++){
+		h_mean[i] = (index_dev_min+index_dev_max)/2.;
+		h_stdev[i] = (index_dev_max - index_dev_min)/2. ;
+	}
 }
 
 int main(int argc, char ** argv) {
