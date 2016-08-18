@@ -196,6 +196,9 @@ int main(int argc, char ** argv) {
 	properties -> saturation = 0;
 	properties -> exposure = AUTO;
 	properties -> shutter_speed = SHUTTER_SPEED;
+	properties->awb=AWB;
+	properties->awb_gr=AWB_R;
+	properties->awb_gb=AWB_B;
 	printf("Init sensor \n");
 	capture = (RaspiCamCvCapture *) raspiCamCvCreateCameraCapture3(0, config, properties, 1);
 	free(config);

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mount /dev/sda1 /home/pi/Pictures
+sudo mount /dev/sda1 /home/pi/Pictures -o dmask=000,fmask=111
 mkdir /home/pi/Pictures/foreground_photos
 mkdir /home/pi/Pictures/preview_photos
 while true ;do
@@ -24,6 +24,6 @@ PREVIEW_FILE+=".jpg"
 
 ./pi_photobooth /home/pi/Pictures/background_photos/${RANDOM_FILE} /home/pi/Pictures/preview_photos/${PREVIEW_FILE}
 raspistill -ss 15000 -t 500 -o /home/pi/Pictures/foreground_photos/${OUTPUT_FILE}
-timeout 2 fbi -T 2 /home/pi/Pictures/preview_photos/${PREVIEW_FILE}
+#sudo timeout 2 fbi -T 2 /home/pi/Pictures/preview_photos/${PREVIEW_FILE}
 sync
 done
