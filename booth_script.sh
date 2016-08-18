@@ -4,6 +4,8 @@ gpio mode 17 up
 sudo mount /dev/sda1 /home/pi/Pictures -o dmask=000,fmask=111
 mkdir /home/pi/Pictures/foreground_photos
 mkdir /home/pi/Pictures/preview_photos
+mogrify -resize 2592x1944^ -gravity center -extent 2592x1944 /home/pi/Pictures/background_photos/*
+
 while true ;do
 TIMESTAMP=`date +%s`
 RANDOM_FILE=`ls /home/pi/Pictures/background_photos | sort -R | tail -n 1`
