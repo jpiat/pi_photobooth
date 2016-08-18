@@ -18,10 +18,9 @@
 #define STD_DEV_TOLERANCE_H 2.5
 #define STD_DEV_TOLERANCE_S 2.5
 
-int display_width ;
-int display_height ;//#define SDL2
-char * output_path = NULL ;
-
+int display_width;
+int display_height; //#define SDL2
+char * output_path = NULL;
 
 #ifdef PI
 RaspiCamCvCapture * capture;
@@ -33,7 +32,6 @@ CvCapture * capture;
 SDL_Surface* gScreenSurface = NULL, *gWindow;
 
 #ifdef SDL2
-
 
 int init_sdl() {
 
@@ -57,10 +55,10 @@ int init_sdl() {
 }
 
 SDL_Surface * ipl_to_sdl(IplImage * img) {
-        SDL_Surface *surface = SDL_CreateRGBSurfaceFrom((void*) img->imageData,
-                        img->width, img->height, img->depth * img->nChannels,
-                        img->widthStep, 0xff0000, 0x00ff00, 0x0000ff, 0);
-        return surface;
+	SDL_Surface *surface = SDL_CreateRGBSurfaceFrom((void*) img->imageData,
+			img->width, img->height, img->depth * img->nChannels,
+			img->widthStep, 0xff0000, 0x00ff00, 0x0000ff, 0);
+	return surface;
 }
 
 #else
@@ -68,33 +66,33 @@ int init_sdl() {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
 		SDL_Quit();
-		return 0 ;
+		return 0;
 	}
 
 	const SDL_VideoInfo* videoInfo = SDL_GetVideoInfo ();
 	int systemX = videoInfo->current_w;
 	int systemY = videoInfo->current_h;
 	int systemZ = videoInfo->vfmt->BitsPerPixel;
-	display_width = systemX ;
-	display_height = systemY ;
+	display_width = systemX;
+	display_height = systemY;
 	printf ("%d x %d, %d bpp\n", systemX, systemY, systemZ);
 	//SDL_Quit();
 	//exit(0);
 	SDL_ShowCursor(0);
 	gScreenSurface = SDL_SetVideoMode(systemX, systemY, systemZ,
 			SDL_HWSURFACE | SDL_FULLSCREEN | SDL_DOUBLEBUF);
-	if (gScreenSurface == NULL){
+	if (gScreenSurface == NULL) {
 		SDL_Quit();
 		printf("SDL_SetVideoMode failed: %s\n");
-		return 0 ;
+		return 0;
 	}
 	return 1;
 }
 SDL_Surface * ipl_to_sdl(IplImage * img) {
-        SDL_Surface *surface = SDL_CreateRGBSurfaceFrom((void*) img->imageData,
-                        img->width, img->height, img->depth * img->nChannels,
-                        img->widthStep, 0xff0000, 0x00ff00, 0x0000ff, 0);
-        return surface;
+	SDL_Surface *surface = SDL_CreateRGBSurfaceFrom((void*) img->imageData,
+			img->width, img->height, img->depth * img->nChannels,
+			img->widthStep, 0xff0000, 0x00ff00, 0x0000ff, 0);
+	return surface;
 }
 
 #endif
@@ -189,7 +187,7 @@ inline void bgr_to_hsv(char * bgr_pix, float * h, float * s, float * v) {
 
 int main(int argc, char ** argv) {
 	int x, y, i;
-	int pin_state = 1 ;
+	int pin_state = 1;
 	IplImage * origin;
 
 	if (argc < 2) {
@@ -197,7 +195,8 @@ int main(int argc, char ** argv) {
 		return -1;
 	}
 
-	if(argc > 2) output_path = argv[2] ;
+	if (argc > 2)
+		output_path = argv[2];
 
 	IplImage * background_image = cvLoadImage(argv[1], CV_LOAD_IMAGE_COLOR);
 #ifdef PI
@@ -214,6 +213,12 @@ int main(int argc, char ** argv) {
 			cvSize(PREVIEW_WIDTH, PREVIEW_HEIGHT), IPL_DEPTH_8U, 3);
 	IplImage * background_learnt = cvCreateImage(
 			cvSize(PREVIEW_WIDTH, PREVIEW_HEIGHT), IPL_DEPTH_8U, 1);
+
+	IplImage * eroded_mask = cvCreateImage(
+			cvSize(PREVIEW_WIDTH, PREVIEW_HEIGHT), IPL_DEPTH_8U, 1);
+	IplImage * opened = cvCreateImage(cvSize(PREVIEW_WIDTH, PREVIEW_HEIGHT),
+	IPL_DEPTH_8U, 1);
+
 	double * h_mean, *s_mean, *h_stdev, *s_stdev;
 
 	h_mean = malloc(PREVIEW_WIDTH * PREVIEW_HEIGHT * sizeof(double));
@@ -241,7 +246,7 @@ int main(int argc, char ** argv) {
 	properties -> brightness = 50;
 	properties -> saturation = 0;
 	properties -> exposure = AUTO;
-	properties -> shutter_speed = SHUTTER_SPEED ;
+	properties -> shutter_speed = SHUTTER_SPEED;
 	printf("Init sensor \n");
 	capture = (RaspiCamCvCapture *) raspiCamCvCreateCameraCapture3(0, config, properties, 1);
 	free(config);
@@ -251,7 +256,7 @@ int main(int argc, char ** argv) {
 		IplImage* image = raspiCamCvQueryFrame(capture);
 	}
 	//if(init_sdl() == 0)printf("Failed to start display\n");
-	pinMode (0, INPUT); //setup pin 0 to trigger capture
+	pinMode (0, INPUT);//setup pin 0 to trigger capture
 	pullUpDnControl(0, PUD_UP);
 	pin_state = digitalRead(0);
 #else
@@ -264,21 +269,22 @@ int main(int argc, char ** argv) {
 	FILE * fd_smean = fopen("./background_smean.raw", "rb");
 	FILE * fd_sstdev = fopen("./background_sstdev.raw", "rb");
 
-	if(fd_hmean == NULL || fd_hstdev == NULL || fd_smean == NULL || fd_sstdev == NULL){
+	if (fd_hmean == NULL || fd_hstdev == NULL || fd_smean == NULL
+			|| fd_sstdev == NULL) {
 		printf("No calibration file found \n");
-		exit(0);	
+		exit(0);
 	}
-	
-	fread(h_mean, sizeof(double), PREVIEW_WIDTH*PREVIEW_HEIGHT, fd_hmean);
-	fread(h_stdev, sizeof(double), PREVIEW_WIDTH*PREVIEW_HEIGHT, fd_hstdev);
-	fread(s_mean, sizeof(double), PREVIEW_WIDTH*PREVIEW_HEIGHT, fd_smean);
-	fread(s_stdev, sizeof(double), PREVIEW_WIDTH*PREVIEW_HEIGHT, fd_sstdev);
-	
+
+	fread(h_mean, sizeof(double), PREVIEW_WIDTH * PREVIEW_HEIGHT, fd_hmean);
+	fread(h_stdev, sizeof(double), PREVIEW_WIDTH * PREVIEW_HEIGHT, fd_hstdev);
+	fread(s_mean, sizeof(double), PREVIEW_WIDTH * PREVIEW_HEIGHT, fd_smean);
+	fread(s_stdev, sizeof(double), PREVIEW_WIDTH * PREVIEW_HEIGHT, fd_sstdev);
+
 	fclose(fd_hmean);
 	fclose(fd_hstdev);
 	fclose(fd_smean);
 	fclose(fd_sstdev);
-	
+
 	printf("Background loaded \n");
 	for (y = 0; y < background_learnt->height; y++) {
 		for (x = 0; x < background_learnt->width; x++) {
@@ -294,7 +300,7 @@ int main(int argc, char ** argv) {
 					h_u8;
 		}
 	}
-	if(init_sdl() ==0){
+	if (init_sdl() == 0) {
 		printf("Failed to init display \n");
 		SDL_Quit();
 		exit(-1);
@@ -334,47 +340,73 @@ int main(int argc, char ** argv) {
 				//need to perform dilate of background ...
 				int decal_x, decal_y;
 				if (x > 1 && y > 1) {
+					//new pixel coordinate for shifted 3x3 window
 					decal_x = x - 1;
 					decal_y = y - 1;
-					unsigned char is_background = 0;
+					unsigned char eroded_pixel = 1, is_background = 0;
 					//dilate
-					/*is_background |= background_mask->imageData[decal_y
-							* background_mask->widthStep
-							+ (decal_x * background_mask->nChannels)];*/
-					is_background |= background_mask->imageData[(decal_y + 1)
+					eroded_pixel &= background_mask->imageData[decal_y
 							* background_mask->widthStep
 							+ (decal_x * background_mask->nChannels)];
-					is_background |= background_mask->imageData[(decal_y - 1)
+					eroded_pixel &= background_mask->imageData[(decal_y + 1)
 							* background_mask->widthStep
 							+ (decal_x * background_mask->nChannels)];
-					is_background |= background_mask->imageData[decal_y
+					eroded_pixel &= background_mask->imageData[(decal_y - 1)
+							* background_mask->widthStep
+							+ (decal_x * background_mask->nChannels)];
+					eroded_pixel &= background_mask->imageData[decal_y
 							* background_mask->widthStep
 							+ ((decal_x + 1) * background_mask->nChannels)];
-					is_background |= background_mask->imageData[decal_y
+					eroded_pixel &= background_mask->imageData[decal_y
 							* background_mask->widthStep
 							+ ((decal_x - 1) * background_mask->nChannels)];
 
-					if (is_background != 0) {
-						preview->imageData[decal_y * preview->widthStep
-								+ (decal_x * preview->nChannels)] =
-								preview_background->imageData[decal_y
-										* preview_background->widthStep
-										+ (decal_x
-												* preview_background->nChannels)];
-						preview->imageData[decal_y * preview->widthStep
-								+ (decal_x * preview->nChannels) + 1] =
-								preview_background->imageData[decal_y
-										* preview_background->widthStep
-										+ (decal_x
-												* preview_background->nChannels)
-										+ 1];
-						preview->imageData[decal_y * preview->widthStep
-								+ (decal_x * preview->nChannels) + 2] =
-								preview_background->imageData[decal_y
-										* preview_background->widthStep
-										+ (decal_x
-												* preview_background->nChannels)
-										+ 2];
+					eroded_mask->imageData[decal_y * eroded_mask->widthStep
+							+ ((decal_x + 1) * eroded_mask->nChannels)] =
+							eroded_pixel;
+
+					//now that we eroded the background, we can dilate
+					if (x > 2 && y > 2) {
+						//we shift the current kernel to the left
+						decal_x = x - 2;
+						decal_y = y - 2;
+						is_background |= eroded_mask->imageData[decal_y
+								* eroded_mask->widthStep
+								+ (decal_x * eroded_mask->nChannels)];
+						is_background |= eroded_mask->imageData[(decal_y + 1)
+								* eroded_mask->widthStep
+								+ (decal_x * eroded_mask->nChannels)];
+						is_background |= eroded_mask->imageData[(decal_y - 1)
+								* eroded_mask->widthStep
+								+ (decal_x * eroded_mask->nChannels)];
+						is_background |= eroded_mask->imageData[decal_y
+								* eroded_mask->widthStep
+								+ ((decal_x + 1) * eroded_mask->nChannels)];
+						is_background |= eroded_mask->imageData[decal_y
+								* eroded_mask->widthStep
+								+ ((decal_x - 1) * eroded_mask->nChannels)];
+						if (is_background != 0) {
+							preview->imageData[decal_y * preview->widthStep
+									+ (decal_x * preview->nChannels)] =
+									preview_background->imageData[decal_y
+											* preview_background->widthStep
+											+ (decal_x
+													* preview_background->nChannels)];
+							preview->imageData[decal_y * preview->widthStep
+									+ (decal_x * preview->nChannels) + 1] =
+									preview_background->imageData[decal_y
+											* preview_background->widthStep
+											+ (decal_x
+													* preview_background->nChannels)
+											+ 1];
+							preview->imageData[decal_y * preview->widthStep
+									+ (decal_x * preview->nChannels) + 2] =
+									preview_background->imageData[decal_y
+											* preview_background->widthStep
+											+ (decal_x
+													* preview_background->nChannels)
+											+ 2];
+						}
 					}
 
 				}
@@ -386,9 +418,9 @@ int main(int argc, char ** argv) {
 				diff_time.tv_nsec);
 #ifdef PI
 		SDL_Surface * sdl_surface = ipl_to_sdl(preview);
-		SDL_Rect position ;
+		SDL_Rect position;
 		position.x = (display_width/2) - (PREVIEW_WIDTH/2);
-		position.y = 0 ;
+		position.y = 0;
 		SDL_BlitSurface(sdl_surface, NULL, gScreenSurface, &position);
 #ifdef SDL2
 		SDL_UpdateWindowSurface(gWindow);
@@ -410,13 +442,13 @@ int main(int argc, char ** argv) {
 		}
 		SDL_Delay(1);
 		SDL_FreeSurface(sdl_surface);
-		if(digitalRead(0) == 1 && pin_state == 0){ //Rising edge ends program
+		if(digitalRead(0) == 1 && pin_state == 0) { //Rising edge ends program
 			//Should record the last fused frame for preview purpose
 			if(output_path != NULL) cvSaveImage(output_path, preview, 0);
 			raspiCamCvReleaseCapture(&capture);
 			SDL_Quit();
-                        exit(0);
-		}else{
+			exit(0);
+		} else {
 			pin_state= digitalRead(0);
 		}
 #else
