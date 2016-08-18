@@ -185,8 +185,36 @@ inline void bgr_to_hsv(char * bgr_pix, float * h, float * s, float * v) {
 #endif
 }
 
+inline int erode_pos(IplImage * img, int x, int y) {
+	int eroded_pixel = 1;
+	eroded_pixel &= img->imageData[y * img->widthStep + (x * img->nChannels)];
+	eroded_pixel &= img->imageData[(y + 1) * img->widthStep
+			+ (x * img->nChannels)];
+	eroded_pixel &= img->imageData[(y - 1) * img->widthStep
+			+ (x * img->nChannels)];
+	eroded_pixel &= img->imageData[y * img->widthStep
+			+ ((x + 1) * img->nChannels)];
+	eroded_pixel &= img->imageData[y * img->widthStep
+			+ ((x - 1) * img->nChannels)];
+	return eroded_pixel;
+}
+
+inline int dilate_pos(IplImage * img, int x, int y) {
+	int dilate_pixel = 0;
+	dilate_pixel |= img->imageData[y * img->widthStep + (x * img->nChannels)];
+	dilate_pixel |= img->imageData[(y + 1) * img->widthStep
+			+ (x * img->nChannels)];
+	dilate_pixel |= img->imageData[(y - 1) * img->widthStep
+			+ (x * img->nChannels)];
+	dilate_pixel |= img->imageData[y * img->widthStep
+			+ ((x + 1) * img->nChannels)];
+	dilate_pixel |= img->imageData[y * img->widthStep
+			+ ((x - 1) * img->nChannels)];
+	return dilate_pixel;
+}
+
 int main(int argc, char ** argv) {
-	int x, y, i;
+	int x, y;
 	int pin_state = 1;
 	IplImage * origin;
 
@@ -275,6 +303,7 @@ int main(int argc, char ** argv) {
 		exit(0);
 	}
 
+	//should check return to make sure all data was read
 	fread(h_mean, sizeof(double), PREVIEW_WIDTH * PREVIEW_HEIGHT, fd_hmean);
 	fread(h_stdev, sizeof(double), PREVIEW_WIDTH * PREVIEW_HEIGHT, fd_hstdev);
 	fread(s_mean, sizeof(double), PREVIEW_WIDTH * PREVIEW_HEIGHT, fd_smean);
@@ -300,11 +329,13 @@ int main(int argc, char ** argv) {
 					h_u8;
 		}
 	}
+#ifdef PI
 	if (init_sdl() == 0) {
 		printf("Failed to init display \n");
 		SDL_Quit();
 		exit(-1);
 	}
+#endif
 	//cvShowImage("back", background_learnt);
 	while (1) {
 #ifdef PI
@@ -343,49 +374,17 @@ int main(int argc, char ** argv) {
 					//new pixel coordinate for shifted 3x3 window
 					decal_x = x - 1;
 					decal_y = y - 1;
-					unsigned char eroded_pixel = 1, is_background = 0;
-					//dilate
-					eroded_pixel &= background_mask->imageData[decal_y
-							* background_mask->widthStep
-							+ (decal_x * background_mask->nChannels)];
-					eroded_pixel &= background_mask->imageData[(decal_y + 1)
-							* background_mask->widthStep
-							+ (decal_x * background_mask->nChannels)];
-					eroded_pixel &= background_mask->imageData[(decal_y - 1)
-							* background_mask->widthStep
-							+ (decal_x * background_mask->nChannels)];
-					eroded_pixel &= background_mask->imageData[decal_y
-							* background_mask->widthStep
-							+ ((decal_x + 1) * background_mask->nChannels)];
-					eroded_pixel &= background_mask->imageData[decal_y
-							* background_mask->widthStep
-							+ ((decal_x - 1) * background_mask->nChannels)];
 
 					eroded_mask->imageData[decal_y * eroded_mask->widthStep
 							+ ((decal_x + 1) * eroded_mask->nChannels)] =
-							eroded_pixel;
+							erode_pos(background_mask, decal_x, decal_y);
 
 					//now that we eroded the background, we can dilate
 					if (x > 2 && y > 2) {
 						//we shift the current kernel to the left
 						decal_x = x - 2;
 						decal_y = y - 2;
-						is_background |= eroded_mask->imageData[decal_y
-								* eroded_mask->widthStep
-								+ (decal_x * eroded_mask->nChannels)];
-						is_background |= eroded_mask->imageData[(decal_y + 1)
-								* eroded_mask->widthStep
-								+ (decal_x * eroded_mask->nChannels)];
-						is_background |= eroded_mask->imageData[(decal_y - 1)
-								* eroded_mask->widthStep
-								+ (decal_x * eroded_mask->nChannels)];
-						is_background |= eroded_mask->imageData[decal_y
-								* eroded_mask->widthStep
-								+ ((decal_x + 1) * eroded_mask->nChannels)];
-						is_background |= eroded_mask->imageData[decal_y
-								* eroded_mask->widthStep
-								+ ((decal_x - 1) * eroded_mask->nChannels)];
-						if (is_background != 0) {
+						if (dilate_pos(eroded_mask, decal_x, decal_y) != 0) {
 							preview->imageData[decal_y * preview->widthStep
 									+ (decal_x * preview->nChannels)] =
 									preview_background->imageData[decal_y
