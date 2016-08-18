@@ -16,7 +16,7 @@ inline void bgr_to_hsv(char * bgr_pix, float * h, float * s, float * v) {
 #ifndef FAST_CONV
 	float r, g, b;
 	float c, M, m;
-	b = ((float) ((unsigned char*) bgr_pix)[0])/255.O;
+	b = ((float) ((unsigned char*) bgr_pix)[0])/255.0;
 	g = ((float)  ((unsigned char*) bgr_pix)[1])/255.0;
 	r = ((float) ((unsigned char*) bgr_pix)[2])/255.0;
 	M = r > g ? r : g;
