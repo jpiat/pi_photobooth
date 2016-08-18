@@ -25,15 +25,14 @@ RaspiCamCvCapture * capture;
 CvCapture * capture;
 #endif
 
-#define FAST_CONV
 inline void bgr_to_hsv(char * bgr_pix, float * h, float * s, float * v) {
 
 #ifndef FAST_CONV
-	unsigned char r, g, b;
+	float r, g, b;
 	float c, M, m;
-	b = ((unsigned char*) bgr_pix)[0];
-	g = ((unsigned char*) bgr_pix)[1];
-	r = ((unsigned char*) bgr_pix)[2];
+	b = ((float) ((unsigned char*) bgr_pix)[0])/255.O;
+	g = ((float)  ((unsigned char*) bgr_pix)[1])/255.0;
+	r = ((float) ((unsigned char*) bgr_pix)[2])/255.0;
 	M = r > g ? r : g;
 	M = b > M ? b : M;
 	m = r < g ? r : g;
@@ -179,6 +178,7 @@ int main(int argc, char ** argv) {
 		printf("Allocation error \n");
 		exit(-1);
 	}
+	
 
 #ifdef PI
 	RASPIVID_CONFIG * config = (RASPIVID_CONFIG*)malloc(sizeof(RASPIVID_CONFIG));

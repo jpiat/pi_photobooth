@@ -15,7 +15,7 @@
 #endif
 
 #include "camera_config.h"
-#define STD_DEV_TOLERANCE_H 3.5
+#define STD_DEV_TOLERANCE_H 2.5
 #define STD_DEV_TOLERANCE_S 3.5
 
 int display_width;
@@ -126,7 +126,6 @@ int timespec_subtract(struct timespec * result, struct timespec * x,
 	return x->tv_sec < y->tv_sec;
 }
 
-#define FAST_CONV
 inline void bgr_to_hsv(char * bgr_pix, float * h, float * s, float * v) {
 
 #ifndef FAST_CONV
@@ -364,7 +363,7 @@ int main(int argc, char ** argv) {
 				ch_std = h_stdev[y * preview->width + x];
 				cs_std = s_stdev[y * preview->width + x];
 				if (dist_h <= (STD_DEV_TOLERANCE_H * ch_std)
-						&& dist_s <= (STD_DEV_TOLERANCE_S * cs_std)) {
+						/*&& dist_s <= (STD_DEV_TOLERANCE_S * cs_std)*/) {
 					background_mask->imageData[y * background_mask->widthStep
 							+ (x * background_mask->nChannels)] = 0xFF;
 				}
@@ -378,14 +377,14 @@ int main(int argc, char ** argv) {
 
 					eroded_mask->imageData[decal_y * eroded_mask->widthStep
 							+ ((decal_x + 1) * eroded_mask->nChannels)] =
-							erode_pos(background_mask, decal_x, decal_y);
+							dilate_pos(background_mask, decal_x, decal_y);
 
 					//now that we eroded the background, we can dilate
 					if (x > 2 && y > 2) {
 						//we shift the current kernel to the left
 						decal_x = x - 2;
 						decal_y = y - 2;
-						if (dilate_pos(eroded_mask, decal_x, decal_y) != 0) {
+						if (erode_pos(eroded_mask, decal_x, decal_y) != 0) {
 							preview->imageData[decal_y * preview->widthStep
 									+ (decal_x * preview->nChannels)] =
 									preview_background->imageData[decal_y
