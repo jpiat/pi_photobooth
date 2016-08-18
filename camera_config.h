@@ -1,3 +1,4 @@
+#include <math.h>
 unsigned int PREVIEW_WIDTH = 960;
 unsigned int PREVIEW_HEIGHT = 720;
 unsigned int FRAMERATE = 10 ;
@@ -10,8 +11,10 @@ float AWB_R = 1.3;
 #define H_FLIP 0
 #define V_FLIP 0
 
+#define FAST_CONV
 
 inline void bgr_to_hsv(char * bgr_pix, float * h, float * s, float * v) {
+
 
 #ifndef FAST_CONV
 	float r, g, b;
@@ -37,9 +40,9 @@ inline void bgr_to_hsv(char * bgr_pix, float * h, float * s, float * v) {
 
 #else
 	float r, g, b;
-	b = (float) ((unsigned char*) bgr_pix)[0];
-	g = (float) ((unsigned char*) bgr_pix)[1];
-	r = (float) ((unsigned char*) bgr_pix)[2];
+	b = (float) ((unsigned char*) bgr_pix)[0]/255.0;
+	g = (float) ((unsigned char*) bgr_pix)[1]/255.0;
+	r = (float) ((unsigned char*) bgr_pix)[2]/255.0;
 	float K = 0.f;
 	float chroma = 0.f;
 	if (g < b) {
@@ -64,6 +67,7 @@ inline void bgr_to_hsv(char * bgr_pix, float * h, float * s, float * v) {
 		chroma = r - g;
 
 	(*h) = fabs(K + (g - b) / (6.f * chroma + 1e-20f));
+	(*h) = (*h) * 360.0 ;
 	(*s) = chroma / (r + 1e-20f);
 	(*v) = r;
 #endif

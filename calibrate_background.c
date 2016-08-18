@@ -26,6 +26,8 @@ CvCapture * capture;
 #endif
 
 
+float pop[359] ;
+
 void learn_background(double * h_mean, double * s_mean, double * h_stdev,
 		double * s_stdev, int nb_images) {
 	int x, y;
@@ -42,6 +44,7 @@ void learn_background(double * h_mean, double * s_mean, double * h_stdev,
 	memset(s_mean, 0, PREVIEW_WIDTH * PREVIEW_HEIGHT * sizeof(double));
 	memset(h_stdev, 0, PREVIEW_WIDTH * PREVIEW_HEIGHT * sizeof(double));
 	memset(s_stdev, 0, PREVIEW_WIDTH * PREVIEW_HEIGHT * sizeof(double));
+	memset(pop, 0, sizeof(float)*359);
 	for (i = 0; i < nb_images; i++) {
 		float h, s, v;
 #ifdef PI
@@ -56,17 +59,18 @@ void learn_background(double * h_mean, double * s_mean, double * h_stdev,
 				bgr_to_hsv(
 						&(preview->imageData[(y * preview->widthStep)
 								+ (x * preview->nChannels)]), &h, &s, &v);
-				h_mean[(y * preview->width) + x] += (double) h;
-				s_mean[(y * preview->width) + x] += (double) s;
+				pop[(unsigned int) h] +=1.0 ;
+				h_mean[(y * preview->width) + x] += ((double) h)/nb_images;
+				s_mean[(y * preview->width) + x] += ((double) s)/nb_images;
 			}
 		}
 	}
-	for (y = 0; y < preview->height; y++) {
+	/*for (y = 0; y < preview->height; y++) {
 		for (x = 0; x < preview->width; x++) {
 			h_mean[(y * preview->width) + x] /= nb_images;
 			s_mean[(y * preview->width) + x] /= nb_images;
 		}
-	}
+	}*/
 	for (i = 0; i < nb_images; i++) {
 		float h, s, v;
 #ifdef PI
@@ -84,18 +88,27 @@ void learn_background(double * h_mean, double * s_mean, double * h_stdev,
 								+ (x * preview->nChannels)]), &h, &s, &v);
 				dist_h = fabs(h - h_mean[y * preview->width + x]);
 				dist_s = fabs(s - s_mean[y * preview->width + x]);
-				h_stdev[(y * preview->width) + x] += dist_h;
-				s_stdev[(y * preview->width) + x] += dist_s;
+				h_stdev[(y * preview->width) + x] += (dist_h/nb_images);
+				s_stdev[(y * preview->width) + x] += (dist_s/nb_images);
 			}
 		}
 	}
 
-	for (y = 0; y < preview->height; y++) {
+	/*for (y = 0; y < preview->height; y++) {
 		for (x = 0; x < preview->width; x++) {
 			h_stdev[(y * preview->width) + x] /= nb_images;
 			s_stdev[(y * preview->width) + x] /= nb_images;
 		}
+	}*/
+	unsigned int index_max ;
+	float pop_max = 0. ;
+	for(i = 0 ; i < 360 ; i ++){
+		if(pop[i] > pop_max){
+			pop_max = pop[i];
+			index_max = i ;
+		}
 	}
+	printf("Max pop is : %d \n", index_max);
 
 }
 
@@ -146,7 +159,7 @@ int main(int argc, char ** argv) {
 	capture = (RaspiCamCvCapture *) raspiCamCvCreateCameraCapture3(0, config, properties, 1);
 	free(config);
 	printf("Wait stable sensor \n");
-	for(i = 0; i < 10; i ++ ) {
+	for(i = 0; i < 100; i ++ ) {
 		int success = 0;
 		IplImage* image = raspiCamCvQueryFrame(capture);
 	}
