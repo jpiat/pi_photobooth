@@ -26,5 +26,7 @@ PREVIEW_FILE+=".jpg"
 ./pi_photobooth /home/pi/Pictures/background_photos/${RANDOM_FILE} /home/pi/Pictures/preview_photos/${PREVIEW_FILE}
 raspistill -ss 15000 -t 500 -o /home/pi/Pictures/foreground_photos/${OUTPUT_FILE}
 #sudo timeout 2 fbi -T 2 /home/pi/Pictures/preview_photos/${PREVIEW_FILE}
+#convert /home/pi/Pictures/foreground_photos/${OUTPUT_FILE} -bordercolor green -border 1x1 -matte -fill none -fuzz 35% -draw 'matte 1,1 floodfill' -shave 1x1 ${OUTPUT_MASK}
+#composite -compose Dst_Over /home/pi/Pictures/background_photos/${RANDOM_FILE}  ${OUTPUT_MASK} finished.png
 sync
 done
