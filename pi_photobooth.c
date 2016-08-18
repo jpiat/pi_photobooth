@@ -21,9 +21,11 @@
 int display_width;
 int display_height; //#define SDL2
 char * output_path = NULL;
-
+int timeout = -1 ;
+CvFont font ;
 #ifdef PI
 RaspiCamCvCapture * capture;
+#define TRIGGER_PIN 17
 #else
 CvCapture * capture;
 #endif
@@ -185,7 +187,7 @@ int main(int argc, char ** argv) {
 
 	IplImage * eroded_mask = cvCreateImage(
 			cvSize(PREVIEW_WIDTH, PREVIEW_HEIGHT), IPL_DEPTH_8U, 1);
-
+	cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, 8.0, 8.0, 0, 8.0, 8);
 	double * h_mean, *s_mean, *h_stdev, *s_stdev;
 
 	h_mean = malloc(PREVIEW_WIDTH * PREVIEW_HEIGHT * sizeof(double));
@@ -226,9 +228,11 @@ int main(int argc, char ** argv) {
 		IplImage* image = raspiCamCvQueryFrame(capture);
 	}
 	//if(init_sdl() == 0)printf("Failed to start display\n");
-	pinMode (0, INPUT);//setup pin 0 to trigger capture
-	pullUpDnControl(0, PUD_UP);
-	pin_state = digitalRead(0);
+	wiringPiSetupSys();
+	/*pinMode (0, INPUT);//setup pin 0 to trigger capture
+	pullUpDnControl(0, PUD_UP);*/
+	pin_state = digitalRead(TRIGGER_PIN);
+	printf("Current pin state is %d \n", pin_state);
 #else
 	capture = cvCaptureFromCAM(0);
 #endif
@@ -357,6 +361,11 @@ int main(int argc, char ** argv) {
 		timespec_subtract(&diff_time, &end_time, &start_time);
 		printf("%s :  %lu s, %lu ns \n", "processing : ", diff_time.tv_sec,
 				diff_time.tv_nsec);
+		if(timeout > 5){
+			char buff [10] ;
+			sprintf(buff, "%d", (timeout/10)+1);
+			cvPutText(preview, buff, cvPoint((preview->width/2)-100, preview->height/2), &font,cvScalar(255, 255, 255, 0));
+		}
 #ifdef PI
 		SDL_Surface * sdl_surface = ipl_to_sdl(preview);
 		SDL_Rect position;
@@ -383,15 +392,20 @@ int main(int argc, char ** argv) {
 		}
 		SDL_Delay(1);
 		SDL_FreeSurface(sdl_surface);
-		if(digitalRead(0) == 1 && pin_state == 0) { //Rising edge ends program
+		if(timeout < 0 && digitalRead(TRIGGER_PIN) == 1 && pin_state == 0 ) { //Rising edge ends program
 			//Should record the last fused frame for preview purpose
+			timeout = 30 ;
+			/*SDL_Quit();
+			exit(0);*/
+		}
+		pin_state = digitalRead(TRIGGER_PIN);
+		if(timeout == 0){
 			if(output_path != NULL) cvSaveImage(output_path, preview, 0);
 			raspiCamCvReleaseCapture(&capture);
 			SDL_Quit();
 			exit(0);
-		} else {
-			pin_state= digitalRead(0);
 		}
+		if(timeout > 0) timeout -- ;
 #else
 		cvShowImage("preview", preview);
 		cvWaitKey(1);

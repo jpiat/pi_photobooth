@@ -1,5 +1,6 @@
 #!/bin/bash
-
+gpio export 17 in
+gpio mode 17 up
 sudo mount /dev/sda1 /home/pi/Pictures -o dmask=000,fmask=111
 mkdir /home/pi/Pictures/foreground_photos
 mkdir /home/pi/Pictures/preview_photos
