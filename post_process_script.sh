@@ -13,5 +13,6 @@ do
 		FINISHED_MASK=${1}/${FILE_NAME}_mask.png
 		convert ${fg} -bordercolor green -border 1x1 -matte -fill none -fuzz 15% -draw 'matte 1,1 floodfill' -shave 1x1 ${FINISHED_MASK}
 		composite -compose Dst_Over ${fb} ${FINISHED_MASK} ${FINISHED_NAME}
+		sync
 	done
 done
